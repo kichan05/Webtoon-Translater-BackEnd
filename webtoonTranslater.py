@@ -11,9 +11,11 @@ from easyocr import easyocr
 
 from sklearn.cluster import DBSCAN
 
+import config
+
+
 class WebtoonTranslater:
-    def __init__(self, CLOVA_OCR_API_KEY):
-        self.CLOVA_OCR_API_KEY = CLOVA_OCR_API_KEY
+    def __init__(self):
         self.reader = easyocr.Reader(['ko'])
         self.clustering = DBSCAN(eps=100, min_samples=1)
 
@@ -42,7 +44,7 @@ class WebtoonTranslater:
         def clova_ocr():
             api_url = "https://n87nr0rbfr.apigw.ntruss.com/custom/v1/23718/bcc5ffe3be8da4c798eb64b40967c258a03f17fd162bc02a15384f27b7537799/general"
 
-            headers = {'X-OCR-SECRET': self.CLOVA_OCR_API_KEY}
+            headers = {'X-OCR-SECRET': config.CLOVA_OCR_API_KEY}
 
             request_json = {
                 'images': [
@@ -81,7 +83,6 @@ class WebtoonTranslater:
                 })
 
             return ocrFormat
-
 
         if (free):
             ocr_result = easy_ocr()
@@ -144,5 +145,24 @@ class WebtoonTranslater:
 
         return list(cloud_cluster.values())
 
-    # def dialogue_tranlate(self, text):
-    #     pass
+    def dialogue_translate(self, text):
+        def papago_api_tranlate(text):
+            url = f"https://openapi.naver.com/v1/papago/n2mt"
+            header = {
+                "Content-Type": "application/x-www-form-urlencoded",
+                "charset" : "UTF-8",
+                "X-Naver-Client-Id": config.PAPAGO_CLIENT_ID,
+                "X-Naver-Client-Secret": config.PAPAGO_CLIENT_SECRET
+            }
+            params = {
+                "source": "ko",
+                "target": "ja",
+                "text": text
+            }
+
+            res = req.post(url, headers=header, data=params)
+            res = json.loads(res.text)
+
+            return res["message"]["result"]["translatedText"]
+
+        return papago_api_tranlate(text)

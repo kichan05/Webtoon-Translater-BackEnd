@@ -12,7 +12,7 @@ from model import Webtoon
 from webtoonTranslater import WebtoonTranslater
 
 app = FastAPI()
-webtoonTranslater = WebtoonTranslater(config.CLOVA_OCR_API_KEY)
+webtoonTranslater = WebtoonTranslater()
 
 app.add_middleware(
     CORSMiddleware,
