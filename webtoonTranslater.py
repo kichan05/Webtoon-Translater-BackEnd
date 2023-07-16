@@ -29,7 +29,7 @@ class WebtoonTranslater:
                 p2 = bounding_poly[2]
 
                 ocr_format.append({
-                    "ocr_type": "clova orc",
+                    # "ocr_type": "clova orc",
                     "point1": [int(p1["x"]), int(p1["y"])],
                     "point2": [int(p2["x"]), int(p2["y"])],
                     "text": i["inferText"],
@@ -73,7 +73,7 @@ class WebtoonTranslater:
 
             for point, text, acc in ocrResult:
                 ocrFormat.append({
-                    "ocr_type": "easy ocr",
+                    # "ocr_type": "easy ocr",
                     "point1": [int(point[0][0]), int(point[0][1])],
                     "point2": [int(point[2][0]), int(point[2][1])],
                     "text": text,
@@ -132,8 +132,15 @@ class WebtoonTranslater:
                 cloud_cluster[cluster]["point2"][1] = max(cloud_cluster[cluster]["point2"][1], cloud["point2"][1])
 
                 cloud_cluster[cluster]["text"] += " " + cloud["text"]
+
+                cloud_cluster[cluster]["confidence"].append(cloud["confidence"])
             else:
-                cloud_cluster[cluster] = {"point1": cloud["point1"], "point2": cloud["point2"], "text": cloud["text"]}
+                cloud_cluster[cluster] = {"point1": cloud["point1"], "point2": cloud["point2"], "text": cloud["text"],
+                                          "confidence": [cloud["confidence"]]}
+
+        for cluster in set(lables):
+            confidence = cloud_cluster[cluster]["confidence"]
+            cloud_cluster[cluster]["confidence"] = round(sum(confidence) / len(confidence), 3)
 
         return list(cloud_cluster.values())
 

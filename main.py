@@ -2,6 +2,7 @@ from datetime import datetime
 from io import BytesIO
 
 from PIL import Image
+from PIL import ImageDraw
 from fastapi import FastAPI, UploadFile
 from fastapi.responses import FileResponse
 from starlette.middleware.cors import CORSMiddleware
@@ -48,7 +49,18 @@ async def imageOcr(fileList: list[UploadFile]):
     image_path = f"./image/{timeStamp}.png"
     merged_image.save(image_path)
 
-    ocr_result = webtoonTranslater.imageOCR(image_path, False)
+    ocr_result = webtoonTranslater.imageOCR(image_path, True)
+
+    # draw = ImageDraw.Draw(merged_image)
+    #
+    # for i in ocr_result:
+    #     draw.rectangle(
+    #         (tuple(i["point1"]), tuple(i["point2"])),
+    #         outline = (255, 0, 0), width=1
+    #     )
+    #
+    # merged_image.show()
+
 
     return {"timeStamp": timeStamp, "ocr": ocr_result}
 

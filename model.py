@@ -6,7 +6,7 @@ from pydantic import BaseModel
 #     y: int
 
 class Dialogue(BaseModel):
-    ocr_type : str
+    # ocr_type : str
     point1: list[int]
     point2: list[int]
     text: str
