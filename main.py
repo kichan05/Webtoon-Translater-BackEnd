@@ -1,12 +1,13 @@
-import uvicorn
-from fastapi import FastAPI, UploadFile
-from fastapi.responses import FileResponse
 from datetime import datetime
 from io import BytesIO
+
 from PIL import Image
+from fastapi import FastAPI, UploadFile
+from fastapi.responses import FileResponse
 from starlette.middleware.cors import CORSMiddleware
 
 import config
+from model import Webtoon
 from webtoonTranslater import WebtoonTranslater
 
 app = FastAPI()
@@ -14,10 +15,10 @@ webtoonTranslater = WebtoonTranslater(config.CLOVA_OCR_API_KEY)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=['*'], # 모든 origin을 허용합니다.
+    allow_origins=['*'],  # 모든 origin을 허용합니다.
     allow_credentials=True,
-    allow_methods=["*"], # 모든 method를 허용합니다.
-    allow_headers=["*"] # 모든 headers를 허용합니다.
+    allow_methods=["*"],  # 모든 method를 허용합니다.
+    allow_headers=["*"]  # 모든 headers를 허용합니다.
 )
 
 
@@ -31,6 +32,7 @@ def test():
     timeStamp = datetime.now().strftime("%Y-%m-%d %H.%M.%S")
     return {"result": "OK", "timeStamp": timeStamp}
 
+#
 @app.post("/imageOcr")
 async def imageOcr(fileList: list[UploadFile]):
     timeStamp = datetime.now().strftime("%Y-%m-%d %H.%M.%S")
@@ -46,9 +48,16 @@ async def imageOcr(fileList: list[UploadFile]):
     image_path = f"./image/{timeStamp}.png"
     merged_image.save(image_path)
 
-    ocr_result = webtoonTranslater.imageOCR(image_path)
+    ocr_result = webtoonTranslater.imageOCR(image_path, False)
 
     return {"timeStamp": timeStamp, "ocr": ocr_result}
+
+@app.post("/translate")
+async def translate(webtoon : Webtoon):
+    timeStamp = datetime.now().strftime("%Y-%m-%d %H.%M.%S")
+    textAll = " ".join([i.text for i in webtoon.ocr])
+
+    return {"timeStamp": timeStamp, "result" : textAll}
 
 
 @app.post("/imageUpload")
