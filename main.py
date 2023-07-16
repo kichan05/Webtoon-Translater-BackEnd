@@ -1,7 +1,7 @@
 from datetime import datetime
 from io import BytesIO
 
-from PIL import Image
+from PIL import Image, ImageFont
 from PIL import ImageDraw
 from fastapi import FastAPI, UploadFile
 from fastapi.responses import FileResponse
@@ -49,27 +49,49 @@ async def imageOcr(fileList: list[UploadFile]):
     image_path = f"./image/{timeStamp}.png"
     merged_image.save(image_path)
 
+
     ocr_result = webtoonTranslater.imageOCR(image_path, True)
 
-    # draw = ImageDraw.Draw(merged_image)
-    #
-    # for i in ocr_result:
-    #     draw.rectangle(
-    #         (tuple(i["point1"]), tuple(i["point2"])),
-    #         outline = (255, 0, 0), width=1
-    #     )
-    #
-    # merged_image.show()
+    drawImage = merged_image.copy()
+    draw = ImageDraw.Draw(drawImage)
+    for n, i in enumerate(ocr_result):
+        box_postion = tuple(i["point1"] + i["point2"])
 
+        draw.rectangle(
+            box_postion,
+            width=2, outline=(255, 57, 57)
+        )
+
+    drawImage.save(f"./ocr/{timeStamp}.png")
 
     return {"timeStamp": timeStamp, "ocr": ocr_result}
 
 @app.post("/translate")
 async def translate(webtoon : Webtoon):
-    timeStamp = datetime.now().strftime("%Y-%m-%d %H.%M.%S")
-    textAll = " ".join([i.text for i in webtoon.ocr])
+    translate = [webtoonTranslater.dialogue_translate(i.text) for i in webtoon.ocr]
+    print(translate)
 
-    return {"timeStamp": timeStamp, "result" : textAll}
+    webtoonImage = Image.open(f"./image/{webtoon.time_stamp}.png")
+
+    draw = ImageDraw.Draw(webtoonImage)
+    font = ImageFont.truetype("./font/NanumSquareB.ttf", size=32)
+
+    for n, text in enumerate(translate):
+        box_postion = tuple(webtoon.ocr[n].point1 + webtoon.ocr[n].point2)
+
+        draw.rectangle(
+            box_postion,
+            fill="#ffffff",
+        )
+
+        draw.text(
+            box_postion,
+            text=text, fill="#000000", font=font
+        )
+
+    webtoonImage.save(f"./translate/{webtoon.time_stamp}.png")
+
+    return {"result" : "success", "translate_webtoon_url" : f"/translate/{webtoon.time_stamp}.png"}
 
 
 @app.post("/imageUpload")
@@ -85,3 +107,11 @@ async def imageUpload(fileList: list[UploadFile]):
 @app.get("/image/{image_name}")
 def getImage(image_name):
     return FileResponse(f"./image/{image_name}", media_type="image/*")
+
+@app.get("/translate/{image_name}")
+def getTranslateImage(image_name):
+    return FileResponse(f"./translate/{image_name}", media_type="image/*")
+
+@app.get("/ocr/{image_name}")
+def getOcrImage(image_name):
+    return FileResponse(f"./ocr/{image_name}", media_type="image/*")

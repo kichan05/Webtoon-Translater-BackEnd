@@ -17,7 +17,7 @@ import config
 class WebtoonTranslater:
     def __init__(self):
         self.reader = easyocr.Reader(['ko'])
-        self.clustering = DBSCAN(eps=100, min_samples=1)
+        self.clustering = DBSCAN(eps=50, min_samples=1)
 
     def imageOCR(self, image_path, free):
         def clova_ocr_format(ocr_result):
@@ -136,8 +136,12 @@ class WebtoonTranslater:
 
                 cloud_cluster[cluster]["confidence"].append(cloud["confidence"])
             else:
-                cloud_cluster[cluster] = {"point1": cloud["point1"], "point2": cloud["point2"], "text": cloud["text"],
-                                          "confidence": [cloud["confidence"]]}
+                cloud_cluster[cluster] = {
+                    "point1": cloud["point1"],
+                    "point2": cloud["point2"],
+                    "text": cloud["text"],
+                    "confidence": [cloud["confidence"]]
+                }
 
         for cluster in set(lables):
             confidence = cloud_cluster[cluster]["confidence"]
@@ -150,13 +154,13 @@ class WebtoonTranslater:
             url = f"https://openapi.naver.com/v1/papago/n2mt"
             header = {
                 "Content-Type": "application/x-www-form-urlencoded",
-                "charset" : "UTF-8",
+                "charset": "UTF-8",
                 "X-Naver-Client-Id": config.PAPAGO_CLIENT_ID,
                 "X-Naver-Client-Secret": config.PAPAGO_CLIENT_SECRET
             }
             params = {
                 "source": "ko",
-                "target": "ja",
+                "target": "en",
                 "text": text
             }
 
