@@ -1,10 +1,9 @@
 from fastapi import FastAPI, UploadFile
+from fastapi.responses import FileResponse
 from datetime import datetime
 from io import BytesIO
 from PIL import Image
-
 import config
-
 from webtoonTranslater import WebtoonTranslater
 
 app = FastAPI()
@@ -32,3 +31,7 @@ async def root(fileList: list[UploadFile]):
     ocr_result = webtoonTranslater.imageOCR(image_path)
 
     return {"timeStamp": timeStamp, "ocr": ocr_result}
+
+@app.get("/image/{image_name}")
+def getImage(image_name):
+    return FileResponse(f"./image/{image_name}", media_type="image/*")
