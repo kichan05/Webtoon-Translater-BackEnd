@@ -1,49 +1,34 @@
 from fastapi import FastAPI, UploadFile
+from datetime import datetime
 from io import BytesIO
 from PIL import Image
-import easyocr
-import numpy as np
-from datetime import datetime
+
+import config
+
+from webtoonTranslater import WebtoonTranslater
 
 app = FastAPI()
-reader = easyocr.Reader(['ko'])
+webtoonTranslater = WebtoonTranslater(config.CLOVA_OCR_API_KEY)
+
+@app.get("/")
+def root():
+    return "Hello World"
 
 @app.post("/imageOcr")
 async def root(fileList: list[UploadFile]):
     timeStamp = datetime.now().strftime("%Y-%m-%d %H.%M.%S")
 
-    imageList = []
-    mergedWidth, mergedHeight = 0, 0
-
+    image_list = []
     for file in fileList:
         content = await file.read()
         image = Image.open(BytesIO(content))
-        width, height = image.size
-        mergedWidth = width
-        mergedHeight += height
+        image_list.append(image)
 
-        imageList.append(image)
+    merged_image = webtoonTranslater.image_merged(image_list)
 
-    mergedImage : Image = Image.new("RGB", (mergedWidth, mergedHeight), (255, 255, 255))
-    currentHeight = 0
-    for image in imageList:
-        mergedImage.paste(image, (0, currentHeight))
-        currentHeight += image.height
+    image_path = f"./image/{timeStamp}.png"
+    merged_image.save(image_path)
 
-    imageName = f"./image/{timeStamp}.png"
+    ocr_result = webtoonTranslater.imageOCR(image_path)
 
-    mergedImage.save(imageName)
-    ocrResult = reader.readtext(imageName)
-    ocrFormat = []
-
-    for point, text, acc in ocrResult:
-        ocrFormat.append({
-            "point1" : [int(point[0][0]), int(point[0][1])],
-            "point2" : [int(point[2][0]), int(point[2][1])],
-            "text" : text,
-            "acc" : round(acc, 2)
-        })
-
-    print(ocrFormat)
-
-    return {"timeStamp" : timeStamp, "ocr" : ocrFormat}
+    return {"timeStamp": timeStamp, "ocr": ocr_result}
