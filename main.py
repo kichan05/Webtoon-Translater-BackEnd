@@ -4,11 +4,21 @@ from fastapi.responses import FileResponse
 from datetime import datetime
 from io import BytesIO
 from PIL import Image
+from starlette.middleware.cors import CORSMiddleware
+
 import config
 from webtoonTranslater import WebtoonTranslater
 
 app = FastAPI()
 webtoonTranslater = WebtoonTranslater(config.CLOVA_OCR_API_KEY)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=['*'], # 모든 origin을 허용합니다.
+    allow_credentials=True,
+    allow_methods=["*"], # 모든 method를 허용합니다.
+    allow_headers=["*"] # 모든 headers를 허용합니다.
+)
 
 
 @app.get("/")
@@ -54,6 +64,3 @@ async def imageUpload(fileList: list[UploadFile]):
 @app.get("/image/{image_name}")
 def getImage(image_name):
     return FileResponse(f"./image/{image_name}", media_type="image/*")
-
-if __name__ == '__main__':
-    uvicorn.run("main:app")
