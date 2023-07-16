@@ -1,3 +1,4 @@
+import uvicorn
 from fastapi import FastAPI, UploadFile
 from fastapi.responses import FileResponse
 from datetime import datetime
@@ -53,3 +54,6 @@ async def imageUpload(fileList: list[UploadFile]):
 @app.get("/image/{image_name}")
 def getImage(image_name):
     return FileResponse(f"./image/{image_name}", media_type="image/*")
+
+if __name__ == '__main__':
+    uvicorn.run("main:app")
