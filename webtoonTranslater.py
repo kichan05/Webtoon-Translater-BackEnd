@@ -6,7 +6,7 @@ import time
 import numpy as np
 
 import requests as req
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont
 from easyocr import easyocr
 
 from sklearn.cluster import DBSCAN
@@ -31,12 +31,10 @@ class WebtoonTranslater:
                 p2 = bounding_poly[2]
 
                 ocr_format.append({
-                    # "ocr_type": "clova orc",
                     "point1": [int(p1["x"]), int(p1["y"])],
                     "point2": [int(p2["x"]), int(p2["y"])],
                     "text": i["inferText"],
                     "confidence": i["inferConfidence"],
-                    # "lineBreak": i["lineBreak"],
                 })
 
             return ocr_format
@@ -89,9 +87,9 @@ class WebtoonTranslater:
         else:
             ocr_result = clova_ocr()
 
-        ocr_clustr = self.cloud_clustering(ocr_result)
+        # ocr_clustr = self.cloud_clustering(ocr_result)
 
-        return ocr_clustr
+        return ocr_result
 
     def image_merged(self, image_list: list[Image]):
         merged_width, merged_height = 0, 0
@@ -143,7 +141,15 @@ class WebtoonTranslater:
                     "confidence": [cloud["confidence"]]
                 }
 
+        text_box_padding = 2
+
         for cluster in set(lables):
+            cloud_cluster[cluster]["point1"][0] -= text_box_padding
+            cloud_cluster[cluster]["point1"][1] -= text_box_padding
+
+            cloud_cluster[cluster]["point2"][0] += text_box_padding
+            cloud_cluster[cluster]["point2"][1] += text_box_padding
+
             confidence = cloud_cluster[cluster]["confidence"]
             cloud_cluster[cluster]["confidence"] = round(sum(confidence) / len(confidence), 3)
 
@@ -170,3 +176,26 @@ class WebtoonTranslater:
             return res["message"]["result"]["translatedText"]
 
         return papago_api_tranlate(text)
+
+    def drawWebtoon(self, imagePath, savePath):
+        image = Image.open(imagePath)
+        text = self.imageOCR(imagePath, True)
+        translate = [self.dialogue_translate(i["text"]) for i in text]
+
+        draw = ImageDraw.Draw(image)
+        font = ImageFont.truetype("./font/KOMTXTBI.ttf", size=22)
+
+        for n, i in enumerate(text):
+            box_postion = tuple(i["point1"] + i["point2"])
+
+            draw.rectangle(
+                box_postion,
+                fill="#ffffff",
+            )
+
+            draw.text(
+                box_postion,
+                text=translate[n], fill="#000000", font=font
+            )
+
+        image.save(f"./{savePath}")

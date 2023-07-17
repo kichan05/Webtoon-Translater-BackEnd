@@ -7,7 +7,6 @@ from fastapi import FastAPI, UploadFile
 from fastapi.responses import FileResponse
 from starlette.middleware.cors import CORSMiddleware
 
-import config
 from model import Webtoon
 from webtoonTranslater import WebtoonTranslater
 
@@ -50,7 +49,7 @@ async def imageOcr(fileList: list[UploadFile]):
     merged_image.save(image_path)
 
 
-    ocr_result = webtoonTranslater.imageOCR(image_path, True)
+    ocr_result = webtoonTranslater.imageOCR(image_path, False)
 
     drawImage = merged_image.copy()
     draw = ImageDraw.Draw(drawImage)
@@ -74,7 +73,7 @@ async def translate(webtoon : Webtoon):
     webtoonImage = Image.open(f"./image/{webtoon.time_stamp}.png")
 
     draw = ImageDraw.Draw(webtoonImage)
-    font = ImageFont.truetype("./font/NanumSquareB.ttf", size=32)
+    font = ImageFont.truetype("./font/KOMTXTBI.ttf", size=20)
 
     for n, text in enumerate(translate):
         box_postion = tuple(webtoon.ocr[n].point1 + webtoon.ocr[n].point2)
@@ -115,3 +114,7 @@ def getTranslateImage(image_name):
 @app.get("/ocr/{image_name}")
 def getOcrImage(image_name):
     return FileResponse(f"./ocr/{image_name}", media_type="image/*")
+
+
+# if __name__ == '__main__':
+    # webtoonTranslater.drawWebtoon("./image/2023-07-17 01.53.26.png", "test.png")
