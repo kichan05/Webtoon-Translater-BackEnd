@@ -49,7 +49,7 @@ async def imageOcr(fileList: list[UploadFile]):
     merged_image.save(image_path)
 
 
-    ocr_result = webtoonTranslater.imageOCR(image_path, False)
+    ocr_result = webtoonTranslater.imageOCR(image_path, True)
 
     drawImage = merged_image.copy()
     draw = ImageDraw.Draw(drawImage)
